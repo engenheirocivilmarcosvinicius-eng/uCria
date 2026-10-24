@@ -46,17 +46,6 @@ def enviar_alerta_discord(mensagem):
     except Exception as e:
         print(f"[-] Erro ao enviar webhook: {e}")
 
-# --- TESTE IMEDIATO AO LIGAR ---
-def testar_conexao_inicial():
-    try:
-        payload = {
-            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto para te avisar."
-        }
-        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
-        print("[+] Mensagem de teste enviada para o Discord com sucesso!")
-    except Exception as e:
-        print(f"[-] Erro ao enviar mensagem de teste: {e}")
-
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
@@ -116,7 +105,7 @@ def monitorar():
                 base_y = coord_y
                 primeira_execucao = False
                 print(f"[📍] ANCORA DEFINIDA para {NOME_PERSONAGEM}: {base_mapa} ({base_x}, {base_y})")
-                enviar_alerta_discord(f"📍 **ANCORA DEFINIDA!**\nMonitorando o personagem **{NOME_PERSONAGEM}** no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
+                enviar_alerta_discord(f"📍 **ÂNCORA DEFINIDA!**\nO bot começou a monitorar o personagem **{NOME_PERSONAGEM}** no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
                 return
 
             if mapa_atual != base_mapa:
@@ -146,7 +135,7 @@ def loop_monitoramento():
     print(f"==========================================")
     print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado! ")
     print(f"==========================================")
-    testar_conexao_inicial()
+    time.sleep(5)
     
     while True:
         monitorar()
