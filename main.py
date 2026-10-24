@@ -38,19 +38,19 @@ def enviar_alerta_discord(mensagem):
     }
     try:
         res = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
-        print(f"[+] Alerta enviado para o Discord! Status: {res.status_code}")
+        print(f"[+] Alerta enviado para o Discord! Status: {res.status_code}", flush=True)
     except Exception as e:
-        print(f"[-] Erro ao enviar webhook: {e}")
+        print(f"[-] Erro ao enviar webhook: {e}", flush=True)
 
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
-    print(f"[*] A aceder ao perfil de {NOME_PERSONAGEM}...")
+    print(f"[*] A aceder ao perfil de {NOME_PERSONAGEM}...", flush=True)
     try:
         resposta = requests.get(URL_PERSONAGEM, headers=HEADERS, timeout=10)
         
         if resposta.status_code != 200:
-            print(f"[-] Erro ao aceder ao site. Status: {resposta.status_code}")
+            print(f"[-] Erro ao aceder ao site. Status: {resposta.status_code}", flush=True)
             return
 
         soup = BeautifulSoup(resposta.text, "html.parser")
@@ -66,7 +66,7 @@ def monitorar():
             enviar_alerta_discord(msg)
         
         ultimo_status_online = status_atual
-        print(f"[+] Status detetado: {status_atual}")
+        print(f"[+] Status detetado: {status_atual}", flush=True)
 
         if status_atual == "Offline":
             return
@@ -91,7 +91,7 @@ def monitorar():
         if not mapa_atual:
             mapa_atual = "Mapa Desconhecido"
 
-        print(f"[VERIFICAÇÃO] Mapa: {mapa_atual} | Coordenadas: X={coord_x}, Y={coord_y}")
+        print(f"[VERIFICAÇÃO] Mapa: {mapa_atual} | Coordenadas: X={coord_x}, Y={coord_y}", flush=True)
 
         if coord_x is not None and coord_y is not None:
             if primeira_execucao:
@@ -99,7 +99,7 @@ def monitorar():
                 base_x = coord_x
                 base_y = coord_y
                 primeira_execucao = False
-                print(f"[📍] ÂNCORA INICIAL DEFINIDA: {base_mapa} ({base_x}, {base_y})")
+                print(f"[📍] ÂNCORA INICIAL DEFINIDA: {base_mapa} ({base_x}, {base_y})", flush=True)
                 enviar_alerta_discord(f"📍 **ÂNCORA DEFINIDA!**\nMonitorando o personagem **{NOME_PERSONAGEM}** no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
                 return
 
@@ -112,7 +112,7 @@ def monitorar():
                 return
 
             distancia = math.sqrt((coord_x - base_x)**2 + (coord_y - base_y)**2)
-            print(f" -> Distância atual da base: {round(distancia, 1)} blocos (Limite: {TOLERANCIA_BLOCO})")
+            print(f" -> Distância atual da base: {round(distancia, 1)} blocos (Limite: {TOLERANCIA_BLOCO})", flush=True)
             
             if distancia > TOLERANCIA_BLOCO:
                 msg = f"⚠️ **MOVIMENTAÇÃO FORA DA ÁREA!**\nO personagem **{NOME_PERSONAGEM}** saiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}."
@@ -120,17 +120,16 @@ def monitorar():
                 base_x = coord_x
                 base_y = coord_y
         else:
-            print("[-] Coordenadas não encontradas nesta leitura.")
+            print("[-] Coordenadas não encontradas nesta leitura.", flush=True)
 
     except Exception as e:
-        print(f"[-] Erro durante a verificação: {e}")
+        print(f"[-] Erro durante a verificação: {e}", flush=True)
 
 def loop_monitoramento():
-    print(f"==========================================")
-    print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado em Loop! ")
-    print(f"==========================================")
+    print(f"==========================================", flush=True)
+    print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado em Loop! ", flush=True)
+    print(f"==========================================", flush=True)
     
-    # Envia o aviso de ligação inicial
     try:
         payload = {
             "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto."
@@ -143,7 +142,6 @@ def loop_monitoramento():
         monitorar()
         time.sleep(30)
 
-# Dispara a thread de monitoramento garantindo que ela não adormeça
 t_monitor = Thread(target=loop_monitoramento)
 t_monitor.daemon = True
 t_monitor.start()
