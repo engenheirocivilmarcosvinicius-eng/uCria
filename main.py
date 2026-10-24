@@ -42,20 +42,10 @@ def enviar_alerta_discord(mensagem):
     except Exception as e:
         print(f"[-] Erro ao enviar webhook: {e}")
 
-def testar_conexao_inicial():
-    try:
-        payload = {
-            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto."
-        }
-        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
-        print("[+] Mensagem de teste enviada para o Discord com sucesso!")
-    except Exception as e:
-        print(f"[-] Erro ao enviar mensagem de teste: {e}")
-
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
-    print(f"[*] A verificar o site de {NOME_PERSONAGEM}...")
+    print(f"[*] A aceder ao perfil de {NOME_PERSONAGEM}...")
     try:
         resposta = requests.get(URL_PERSONAGEM, headers=HEADERS, timeout=10)
         
@@ -73,7 +63,6 @@ def monitorar():
         
         if ultimo_status_online is not None and ultimo_status_online == "Online" and status_atual == "Offline":
             msg = f"⚠️ **PERSONAGEM OFFLINE!**\nO personagem **{NOME_PERSONAGEM}** desconectou ou fechou o jogo!"
-            print(f"[!] PERSONAGEM FICOU OFFLINE!")
             enviar_alerta_discord(msg)
         
         ultimo_status_online = status_atual
@@ -102,7 +91,6 @@ def monitorar():
         if not mapa_atual:
             mapa_atual = "Mapa Desconhecido"
 
-        # IMPRIME SEMPRE A LEITURA NOS LOGS PARA ACOMPANHARES
         print(f"[VERIFICAÇÃO] Mapa: {mapa_atual} | Coordenadas: X={coord_x}, Y={coord_y}")
 
         if coord_x is not None and coord_y is not None:
@@ -117,7 +105,6 @@ def monitorar():
 
             if mapa_atual != base_mapa:
                 msg = f"⚠️ **MUDANÇA DE MAPA!**\nO personagem **{NOME_PERSONAGEM}** foi de `{base_mapa}` para **`{mapa_atual}`** (Coords: {coord_x}, {coord_y})."
-                print(f"[!] MUDANÇA DE MAPA DETETADA!")
                 enviar_alerta_discord(msg)
                 base_mapa = mapa_atual
                 base_x = coord_x
@@ -128,8 +115,7 @@ def monitorar():
             print(f" -> Distância atual da base: {round(distancia, 1)} blocos (Limite: {TOLERANCIA_BLOCO})")
             
             if distancia > TOLERANCIA_BLOCO:
-                msg = f"⚠️ **MOVIMENTAÇÃO FORA DA ÁREA!**\nO personagem **{NOME_PERSONAGEM}** saiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}. (Distância: {round(distancia, 1)} blocos)."
-                print(f"[!] LIMITE EXCEDIDO!")
+                msg = f"⚠️ **MOVIMENTAÇÃO FORA DA ÁREA!**\nO personagem **{NOME_PERSONAGEM}** saiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}."
                 enviar_alerta_discord(msg)
                 base_x = coord_x
                 base_y = coord_y
@@ -143,12 +129,21 @@ def loop_monitoramento():
     print(f"==========================================")
     print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado em Loop! ")
     print(f"==========================================")
-    testar_conexao_inicial()
+    
+    # Envia o aviso de ligação inicial
+    try:
+        payload = {
+            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto."
+        }
+        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+    except:
+        pass
     
     while True:
         monitorar()
         time.sleep(30)
 
+# Dispara a thread de monitoramento garantindo que ela não adormeça
 t_monitor = Thread(target=loop_monitoramento)
 t_monitor.daemon = True
 t_monitor.start()
