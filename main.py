@@ -23,7 +23,7 @@ def keep_alive():
 
 # CONFIGURAÇÕES:
 URL_PERSONAGEM = "https://mudomix.com/profile/character/uCria"
-DISCORD_WEBHOOK_URL = "COLE_SEU_WEBHOOK_DO_DISCORD_AQUI"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
