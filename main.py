@@ -21,7 +21,7 @@ def run_web():
 # CONFIGURAÇÕES:
 NOME_PERSONAGEM = "uCria" 
 URL_PERSONAGEM = f"https://mudomix.com/profile/character/{NOME_PERSONAGEM}"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x" # <-- COLE SEU WEBHOOK AQUI
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -49,7 +49,7 @@ def enviar_alerta_discord(mensagem):
 def testar_conexao_inicial():
     try:
         payload = {
-            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo."
+            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto."
         }
         requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
         print("[+] Mensagem de teste enviada para o Discord com sucesso!")
@@ -91,14 +91,13 @@ def monitorar():
         coord_x = None
         coord_y = None
         
-        # Expressão regular flexível para encontrar números de coordenadas
         match_coords = re.search(r'(\d{1,3})\s*[/,\-]\s*(\d{1,3})', texto_pagina)
         
         if match_coords:
             coord_x = int(match_coords.group(1))
             coord_y = int(match_coords.group(2))
 
-        mapas_conhecidos = ["KantruLand", "Lorencia", "Devias", "Noria", "Elbeland", "Aida", "Crywolf", "Icarus", "Tarkane", "Kanturu", "Barracks", "Refuge"]
+        mapas_conhecidos = ["KantruLand", "Kantruland", "Lorencia", "Devias", "Noria", "Elbeland", "Aida", "Crywolf", "Icarus", "Tarkane", "Kanturu", "Barracks", "Refuge"]
         for m in mapas_conhecidos:
             if m.lower() in texto_pagina.lower():
                 mapa_atual = m
@@ -145,7 +144,7 @@ def monitorar():
 
 def loop_monitoramento():
     print(f"==========================================")
-    print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado! ")
+    print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado em Loop! ")
     print(f"==========================================")
     testar_conexao_inicial()
     
@@ -154,7 +153,7 @@ def loop_monitoramento():
         time.sleep(30)
 
 if __name__ == "__main__":
-    t_web = Thread(target=run_web)
-    t_web.start()
+    t_monitor = Thread(target=loop_monitoramento)
+    t_monitor.start()
     
-    loop_monitoramento()
+    run_web()
