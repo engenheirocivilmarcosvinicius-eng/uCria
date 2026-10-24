@@ -15,12 +15,12 @@ def home():
     return "Bot Mu Domix Online!"
 
 def run_web():
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
 
 # CONFIGURAÇÕES:
 URL_PERSONAGEM = "https://mudomix.com/profile/character/uCria"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x" # <-- O teu link do Discord aqui
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x" # <-- COLE SEU WEBHOOK AQUI
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -40,19 +40,20 @@ def enviar_alerta_discord(mensagem):
         "content": f"🚨 **ALERTA MU DOMIX** 🚨\n{mensagem}"
     }
     try:
-        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        res = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        print(f"[+] Alerta enviado para o Discord! Status: {res.status_code}")
     except Exception as e:
-        print(f"Erro ao enviar webhook: {e}")
+        print(f"[-] Erro ao enviar webhook: {e}")
 
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
-    print("[*] A verificar o site do Mu Domix...")
+    print("[*] Lendo pagina do Mu Domix...")
     try:
         resposta = requests.get(URL_PERSONAGEM, headers=HEADERS, timeout=10)
         
         if resposta.status_code != 200:
-            print(f"[-] Erro ao aceder ao site. Status: {resposta.status_code}")
+            print(f"[-] Erro ao acessar o site. Status: {resposta.status_code}")
             return
 
         soup = BeautifulSoup(resposta.text, "html.parser")
@@ -95,19 +96,20 @@ def monitorar():
             mapa_atual = "Mapa Desconhecido"
 
         if coord_x is not None and coord_y is not None:
-            print(f"[+] Localização -> Mapa: {mapa_atual} | Coordenadas: ({coord_x}, {coord_y})")
+            print(f"[+] Localizacao -> Mapa: {mapa_atual} | Coordenadas: ({coord_x}, {coord_y})")
             
             if primeira_execucao:
                 base_mapa = mapa_atual
                 base_x = coord_x
                 base_y = coord_y
                 primeira_execucao = False
-                print(f"[📍] ÂNCORA DEFINIDA! Monitorando a partir de: {base_mapa} em ({base_x}, {base_y}) com tolerância de {TOLERANCIA_BLOCO} blocos.")
+                print(f"[📍] ANCORA DEFINIDA! Monitorando a partir de: {base_mapa} ({base_x}, {base_y})")
+                enviar_alerta_discord(f"✅ **BOT CONECTADO COM SUCESSO!**\nIniciando monitoramento no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
                 return
 
             if mapa_atual != base_mapa:
                 msg = f"⚠️ **SEU PERSONAGEM SAIU DO MAPA!**\nFoi de `{base_mapa}` para **`{mapa_atual}`** (Coords: {coord_x}, {coord_y}). Provavelmente morreu ou foi movido!"
-                print(f"[!] MUDANÇA DE MAPA DETECTADA!")
+                print(f"[!] MUDANCA DE MAPA DETECTADA!")
                 enviar_alerta_discord(msg)
                 base_mapa = mapa_atual
                 base_x = coord_x
@@ -117,29 +119,30 @@ def monitorar():
             distancia = math.sqrt((coord_x - base_x)**2 + (coord_y - base_y)**2)
             
             if distancia > TOLERANCIA_BLOCO:
-                msg = f"⚠️ **MOVIMENTAÇÃO FORA DA ÁREA!**\nSaiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}. (Distância: {round(distancia, 1)} blocos)."
-                print(f"[!] LIMITE DE MARGEM EXCEDIDO!")
+                msg = f"⚠️ **MOVIMENTACAO FORA DA AREA!**\nSaiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}. (Distancia: {round(distancia, 1)} blocos)."
+                print(f"[!] LIMITE EXCEDIDO!")
                 enviar_alerta_discord(msg)
                 base_x = coord_x
                 base_y = coord_y
         else:
-            print("[-] Coordenadas não encontradas nesta leitura.")
+            print("[-] Coordenadas nao encontradas nesta leitura.")
 
     except Exception as e:
-        print(f"[-] Erro durante a verificação: {e}")
+        print(f"[-] Erro durante a verificacao: {e}")
 
 def loop_monitoramento():
     print("==========================================")
-    print(" Bot Mu Domix Iniciado com Sucesso! ")
+    print(" Bot Mu Domix Iniciado em Loop (30s) ")
     print("==========================================")
+    time.sleep(5)
     while True:
         monitorar()
         time.sleep(30)
 
 if __name__ == "__main__":
-    # Inicia o monitor em segundo plano antes do site
-    t_monitor = Thread(target=loop_monitoramento)
-    t_monitor.start()
+    # Inicia o servidor web em uma thread separada para nao travar o bot
+    t_web = Thread(target=run_web)
+    t_web.start()
     
-    # Inicia o servidor web do Flask
-    run_web()
+    # Roda o monitoramento no fluxo principal
+    loop_monitoramento()
