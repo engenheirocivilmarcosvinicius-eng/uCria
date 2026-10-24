@@ -14,10 +14,6 @@ app = Flask('')
 def home():
     return "Bot Mu Domix Online!"
 
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
-
 # CONFIGURAÇÕES:
 NOME_PERSONAGEM = "uCria" 
 URL_PERSONAGEM = f"https://mudomix.com/profile/character/{NOME_PERSONAGEM}"
@@ -152,8 +148,11 @@ def loop_monitoramento():
         monitorar()
         time.sleep(30)
 
+# Inicia o monitoramento automaticamente em background logo que o script é lido pelo Render
+t_monitor = Thread(target=loop_monitoramento)
+t_monitor.daemon = True
+t_monitor.start()
+
 if __name__ == "__main__":
-    t_monitor = Thread(target=loop_monitoramento)
-    t_monitor.start()
-    
-    run_web()
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
