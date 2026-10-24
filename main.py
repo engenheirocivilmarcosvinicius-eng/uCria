@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from flask import Flask
 from threading import Thread
+import os
 
 # --- SERVIDOR WEB PARA O RENDER ---
 app = Flask('')
@@ -14,16 +15,12 @@ def home():
     return "Bot Mu Domix Online!"
 
 def run_web():
-    app.run(host='0.0.0.0', port=8080)
-
-def keep_alive():
-    t = Thread(target=run_web)
-    t.start()
-# -----------------------------------
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 # CONFIGURAÇÕES:
 URL_PERSONAGEM = "https://mudomix.com/profile/character/uCria"
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x"
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x" # <-- O teu link do Discord aqui
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -50,23 +47,22 @@ def enviar_alerta_discord(mensagem):
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
+    print("[*] A verificar o site do Mu Domix...")
     try:
         resposta = requests.get(URL_PERSONAGEM, headers=HEADERS, timeout=10)
         
         if resposta.status_code != 200:
-            print(f"[-] Erro ao acessar o site. Status: {resposta.status_code}")
+            print(f"[-] Erro ao aceder ao site. Status: {resposta.status_code}")
             return
 
         soup = BeautifulSoup(resposta.text, "html.parser")
         texto_pagina = soup.get_text()
         
         # --- VERIFICAÇÃO DE ONLINE / OFFLINE ---
-        # Procura se a palavra "Offline" ou "Online" aparece explicitamente no perfil
         status_atual = "Online"
         if "offline" in texto_pagina.lower():
             status_atual = "Offline"
         
-        # Se mudou de Online para Offline, dispara o alerta na hora!
         if ultimo_status_online is not None and ultimo_status_online == "Online" and status_atual == "Offline":
             msg = f"⚠️ **SEU PERSONAGEM FICOU OFFLINE!**\nO personagem **uCria** desconectou ou fechou o jogo!"
             print(f"[!] PERSONAGEM FICOU OFFLINE!")
@@ -75,7 +71,6 @@ def monitorar():
         ultimo_status_online = status_atual
         print(f"[+] Status do Servidor: {status_atual}")
 
-        # Se estiver offline, nem precisa checar coordenadas por enquanto
         if status_atual == "Offline":
             return
 
@@ -134,15 +129,17 @@ def monitorar():
         print(f"[-] Erro durante a verificação: {e}")
 
 def loop_monitoramento():
-    time.sleep(10)
     print("==========================================")
-    print(" Bot Mu Domix Iniciado (Online/Offline + Coords) ")
+    print(" Bot Mu Domix Iniciado com Sucesso! ")
     print("==========================================")
     while True:
         monitorar()
         time.sleep(30)
 
 if __name__ == "__main__":
+    # Inicia o monitor em segundo plano antes do site
     t_monitor = Thread(target=loop_monitoramento)
     t_monitor.start()
-    keep_alive()
+    
+    # Inicia o servidor web do Flask
+    run_web()
