@@ -45,6 +45,17 @@ def enviar_alerta_discord(mensagem):
     except Exception as e:
         print(f"[-] Erro ao enviar webhook: {e}")
 
+# --- TESTE IMEDIATO AO LIGAR ---
+def testar_conexao_inicial():
+    try:
+        payload = {
+            "content": "🟢 **BOT LIGADO COM SUCESSO!**\nO sistema de monitoramento do Mu Domix já está ativo e pronto para te avisar."
+        }
+        requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
+        print("[+] Mensagem de teste enviada para o Discord com sucesso!")
+    except Exception as e:
+        print(f"[-] Erro ao enviar mensagem de teste: {e}")
+
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
@@ -104,7 +115,7 @@ def monitorar():
                 base_y = coord_y
                 primeira_execucao = False
                 print(f"[📍] ANCORA DEFINIDA! Monitorando a partir de: {base_mapa} ({base_x}, {base_y})")
-                enviar_alerta_discord(f"✅ **BOT CONECTADO COM SUCESSO!**\nIniciando monitoramento no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
+                enviar_alerta_discord(f"📍 **ANCORA DEFINIDA!**\nMonitorando o personagem **uCria** no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
                 return
 
             if mapa_atual != base_mapa:
@@ -134,15 +145,15 @@ def loop_monitoramento():
     print("==========================================")
     print(" Bot Mu Domix Iniciado em Loop (30s) ")
     print("==========================================")
-    time.sleep(5)
+    # Envia a mensagem de teste assim que o bot arranca na nuvem
+    testar_conexao_inicial()
+    
     while True:
         monitorar()
         time.sleep(30)
 
 if __name__ == "__main__":
-    # Inicia o servidor web em uma thread separada para nao travar o bot
     t_web = Thread(target=run_web)
     t_web.start()
     
-    # Roda o monitoramento no fluxo principal
     loop_monitoramento()
