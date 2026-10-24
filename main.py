@@ -19,7 +19,8 @@ def run_web():
     app.run(host='0.0.0.0', port=port)
 
 # CONFIGURAÇÕES:
-URL_PERSONAGEM = "https://mudomix.com/profile/character/uCria"
+NOME_PERSONAGEM = "uCria" # <-- Mude o nome aqui se for criar para outro personagem no futuro
+URL_PERSONAGEM = f"https://mudomix.com/profile/character/{NOME_PERSONAGEM}"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x" # <-- COLE SEU WEBHOOK AQUI
 
 HEADERS = {
@@ -37,7 +38,7 @@ ultimo_status_online = None
 
 def enviar_alerta_discord(mensagem):
     payload = {
-        "content": f"🚨 **ALERTA MU DOMIX** 🚨\n{mensagem}"
+        "content": f"🚨 **ALERTA MU DOMIX — [{NOME_PERSONAGEM.upper()}]** 🚨\n{mensagem}"
     }
     try:
         res = requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
@@ -49,7 +50,7 @@ def enviar_alerta_discord(mensagem):
 def testar_conexao_inicial():
     try:
         payload = {
-            "content": "🟢 **BOT LIGADO COM SUCESSO!**\nO sistema de monitoramento do Mu Domix já está ativo e pronto para te avisar."
+            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto para te avisar."
         }
         requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
         print("[+] Mensagem de teste enviada para o Discord com sucesso!")
@@ -59,7 +60,7 @@ def testar_conexao_inicial():
 def monitorar():
     global base_mapa, base_x, base_y, primeira_execucao, ultimo_status_online
     
-    print("[*] Lendo pagina do Mu Domix...")
+    print(f"[*] Lendo pagina do personagem {NOME_PERSONAGEM}...")
     try:
         resposta = requests.get(URL_PERSONAGEM, headers=HEADERS, timeout=10)
         
@@ -76,12 +77,12 @@ def monitorar():
             status_atual = "Offline"
         
         if ultimo_status_online is not None and ultimo_status_online == "Online" and status_atual == "Offline":
-            msg = f"⚠️ **SEU PERSONAGEM FICOU OFFLINE!**\nO personagem **uCria** desconectou ou fechou o jogo!"
+            msg = f"⚠️ **PERSONAGEM OFFLINE!**\nO personagem **{NOME_PERSONAGEM}** desconectou ou fechou o jogo!"
             print(f"[!] PERSONAGEM FICOU OFFLINE!")
             enviar_alerta_discord(msg)
         
         ultimo_status_online = status_atual
-        print(f"[+] Status do Servidor: {status_atual}")
+        print(f"[+] Status do Servidor ({NOME_PERSONAGEM}): {status_atual}")
 
         if status_atual == "Offline":
             return
@@ -114,12 +115,12 @@ def monitorar():
                 base_x = coord_x
                 base_y = coord_y
                 primeira_execucao = False
-                print(f"[📍] ANCORA DEFINIDA! Monitorando a partir de: {base_mapa} ({base_x}, {base_y})")
-                enviar_alerta_discord(f"📍 **ANCORA DEFINIDA!**\nMonitorando o personagem **uCria** no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
+                print(f"[📍] ANCORA DEFINIDA para {NOME_PERSONAGEM}: {base_mapa} ({base_x}, {base_y})")
+                enviar_alerta_discord(f"📍 **ANCORA DEFINIDA!**\nMonitorando o personagem **{NOME_PERSONAGEM}** no mapa **{base_mapa}** nas coordenadas **({base_x}, {base_y})**.")
                 return
 
             if mapa_atual != base_mapa:
-                msg = f"⚠️ **SEU PERSONAGEM SAIU DO MAPA!**\nFoi de `{base_mapa}` para **`{mapa_atual}`** (Coords: {coord_x}, {coord_y}). Provavelmente morreu ou foi movido!"
+                msg = f"⚠️ **MUDANÇA DE MAPA!**\nO personagem **{NOME_PERSONAGEM}** foi de `{base_mapa}` para **`{mapa_atual}`** (Coords: {coord_x}, {coord_y}). Provavelmente morreu ou foi movido!"
                 print(f"[!] MUDANCA DE MAPA DETECTADA!")
                 enviar_alerta_discord(msg)
                 base_mapa = mapa_atual
@@ -130,7 +131,7 @@ def monitorar():
             distancia = math.sqrt((coord_x - base_x)**2 + (coord_y - base_y)**2)
             
             if distancia > TOLERANCIA_BLOCO:
-                msg = f"⚠️ **MOVIMENTACAO FORA DA AREA!**\nSaiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}. (Distancia: {round(distancia, 1)} blocos)."
+                msg = f"⚠️ **MOVIMENTACAO FORA DA AREA!**\nO personagem **{NOME_PERSONAGEM}** saiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}. (Distancia: {round(distancia, 1)} blocos)."
                 print(f"[!] LIMITE EXCEDIDO!")
                 enviar_alerta_discord(msg)
                 base_x = coord_x
@@ -142,10 +143,9 @@ def monitorar():
         print(f"[-] Erro durante a verificacao: {e}")
 
 def loop_monitoramento():
-    print("==========================================")
-    print(" Bot Mu Domix Iniciado em Loop (30s) ")
-    print("==========================================")
-    # Envia a mensagem de teste assim que o bot arranca na nuvem
+    print(f"==========================================")
+    print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado! ")
+    print(f"==========================================")
     testar_conexao_inicial()
     
     while True:
