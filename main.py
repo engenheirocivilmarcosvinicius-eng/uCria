@@ -19,7 +19,7 @@ def run_web():
     app.run(host='0.0.0.0', port=port)
 
 # CONFIGURAÇÕES:
-NOME_PERSONAGEM = "uCria" # <-- Mude o nome aqui se for criar para outro personagem no futuro
+NOME_PERSONAGEM = "uCria" 
 URL_PERSONAGEM = f"https://mudomix.com/profile/character/{NOME_PERSONAGEM}"
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1563566611129180301/C_utyhcoH4w1O2fIy93mCyXkX7Ph2c2ZlhzZD3DWAzxLwTZJ0DyyzGE7Sgffn--SzL3x" # <-- COLE SEU WEBHOOK AQUI
 
@@ -46,11 +46,10 @@ def enviar_alerta_discord(mensagem):
     except Exception as e:
         print(f"[-] Erro ao enviar webhook: {e}")
 
-# --- MENSAGEM IMEDIATA AO LIGAR ---
 def testar_conexao_inicial():
     try:
         payload = {
-            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo e pronto para te avisar."
+            "content": f"🟢 **BOT LIGADO COM SUCESSO!**\nO monitoramento para o personagem **{NOME_PERSONAGEM}** já está ativo."
         }
         requests.post(DISCORD_WEBHOOK_URL, json=payload, timeout=5)
         print("[+] Mensagem de teste enviada para o Discord com sucesso!")
@@ -92,7 +91,8 @@ def monitorar():
         coord_x = None
         coord_y = None
         
-        match_coords = re.search(r'(\d{1,3})\s*[/,]\s*(\d{1,3})', texto_pagina)
+        # Expressão regular flexível para encontrar números de coordenadas
+        match_coords = re.search(r'(\d{1,3})\s*[/,\-]\s*(\d{1,3})', texto_pagina)
         
         if match_coords:
             coord_x = int(match_coords.group(1))
@@ -107,9 +107,9 @@ def monitorar():
         if not mapa_atual:
             mapa_atual = "Mapa Desconhecido"
 
+        print(f"[DEBUG] Lido no site -> Mapa: {mapa_atual} | Coords: {coord_x}, {coord_y} | Base atual: {base_mapa} ({base_x}, {base_y})")
+
         if coord_x is not None and coord_y is not None:
-            print(f"[+] Localizacao -> Mapa: {mapa_atual} | Coordenadas: ({coord_x}, {coord_y})")
-            
             if primeira_execucao:
                 base_mapa = mapa_atual
                 base_x = coord_x
@@ -120,7 +120,7 @@ def monitorar():
                 return
 
             if mapa_atual != base_mapa:
-                msg = f"⚠️ **MUDANÇA DE MAPA!**\nO personagem **{NOME_PERSONAGEM}** foi de `{base_mapa}` para **`{mapa_atual}`** (Coords: {coord_x}, {coord_y}). Provavelmente morreu ou foi movido!"
+                msg = f"⚠️ **MUDANÇA DE MAPA!**\nO personagem **{NOME_PERSONAGEM}** foi de `{base_mapa}` para **`{mapa_atual}`** (Coords: {coord_x}, {coord_y})."
                 print(f"[!] MUDANCA DE MAPA DETECTADA!")
                 enviar_alerta_discord(msg)
                 base_mapa = mapa_atual
@@ -129,6 +129,7 @@ def monitorar():
                 return
 
             distancia = math.sqrt((coord_x - base_x)**2 + (coord_y - base_y)**2)
+            print(f"[DEBUG] Distância calculada da base: {round(distancia, 1)} blocos (Tolerância: {TOLERANCIA_BLOCO})")
             
             if distancia > TOLERANCIA_BLOCO:
                 msg = f"⚠️ **MOVIMENTACAO FORA DA AREA!**\nO personagem **{NOME_PERSONAGEM}** saiu da base ({base_x}, {base_y}) e foi para **({coord_x}, {coord_y})** em {mapa_atual}. (Distancia: {round(distancia, 1)} blocos)."
@@ -146,7 +147,6 @@ def loop_monitoramento():
     print(f"==========================================")
     print(f" Bot Mu Domix ({NOME_PERSONAGEM}) Iniciado! ")
     print(f"==========================================")
-    # Dispara o aviso imediato ao arrancar
     testar_conexao_inicial()
     
     while True:
